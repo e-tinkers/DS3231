@@ -35,7 +35,7 @@ typedef enum {
 typedef enum {
   DS3231_ALARM2_EVERY_MINUTE = 0x07, /* Alarm once per minute(when seconds are 0) */
   DS3231_ALARM2_ON_MINUTE    = 0x06, /* Alarm when minutes match */
-  DS3231_ALARM2_ON_HOUR      = 0x04, /* /* Alarm when hours, minutes match */
+  DS3231_ALARM2_ON_HOUR      = 0x04, /* Alarm when hours, minutes match */
   DS3231_ALARM2_ON_DATE      = 0x00, /* Alarm when date (day of month), hours and minutes match */
   DS3231_ALARM2_ON_WEEKDAY   = 0x08  /* Alarm when day (day of week), hours and minutes match */
 } DS3231_ALARM2_t;
@@ -83,8 +83,8 @@ private:
     void _write_register(uint8_t reg, uint8_t val);
     uint8_t _read_register(uint8_t reg);
     uint8_t _read_register(uint8_t reg, uint8_t *data, uint8_t len);
-    uint8_t _bin2bcd(uint8_t val) { return val + 6 * (val / 10); }
-    uint8_t _bcd2bin(uint8_t val) { return val - 6 * (val >> 4); }
+    uint8_t _bin2bcd(int8_t val) { return (uint8_t) val + 6 * (val / 10); }
+    int8_t _bcd2bin(uint8_t val) { return (int8_t) (val - 6 * (val >> 4)); }
 
 };
 #endif

@@ -9,7 +9,7 @@
   @return True if Wire can find DS3231 or false otherwise.
 */
 /**************************************************************************/
-bool DS3231::begin(TwoWire *wire, uint32_t speed = 400000L) {
+bool DS3231::begin(TwoWire *wire, uint32_t speed) {
   _wire = wire;
   _wire->begin();
   if (speed != 400000L) {
@@ -69,8 +69,10 @@ DateTime DS3231::now() {
     .tm_hour  = _bcd2bin(buffer[2] & 0x7F), // msb = 0/1 for 12/24 hours
     .tm_mday  = _bcd2bin(buffer[4]),
     .tm_wday  = _bcd2bin(buffer[3]-1),
-    .tm_mon	  = _bcd2bin(buffer[5]) & 0x7F, // msb = Century
-    .tm_year  = _bcd2bin(buffer[6])
+    .tm_mon	  = _bcd2bin(buffer[5] & 0x7F), // msb = Century
+    .tm_year  = _bcd2bin(buffer[6]),
+    .tm_yday  = 0,
+    .tm_isdst = 0
   };
   return dt;
 }
@@ -133,10 +135,10 @@ void DS3231::setAlarm1(const DateTime *dt, DS3231_ALARM1_t alarm_mode) {
 
   uint8_t buffer[] = {
     DS3231_ALARM1, 
-    _bin2bcd(dt->tm_sec) | A1M1,
-    _bin2bcd(dt->tm_min) | A1M2,
-    _bin2bcd(dt->tm_hour) | A1M3,
-    _bin2bcd(day) | A1M4 | DY_DT
+    _bin2bcd(dt->tm_sec | A1M1),
+    _bin2bcd(dt->tm_min | A1M2),
+    _bin2bcd(dt->tm_hour | A1M3),
+    _bin2bcd(day | A1M4 | DY_DT)
   };
   _write_register(buffer, sizeof(buffer));
 
@@ -166,10 +168,10 @@ void DS3231::setAlarm2(const DateTime *dt, DS3231_ALARM2_t alarm_mode) {
   uint8_t day = (DY_DT) ? weekDay(dt->tm_year, dt->tm_mon, dt->tm_mday) + 1 : dt->tm_mday;
 
   uint8_t buffer[] = {
-    DS3231_ALARM2, 
-    _bin2bcd(dt->tm_min) | A2M2,
-    _bin2bcd(dt->tm_hour) | A2M3,
-    _bin2bcd(day) | A2M4 | DY_DT
+    DS3231_ALARM2,
+    _bin2bcd(dt->tm_min | A2M2),
+    _bin2bcd(dt->tm_hour | A2M3),
+    _bin2bcd(day | A2M4 | DY_DT),
   };
   _write_register(buffer, sizeof(buffer));
 
@@ -475,7 +477,7 @@ uint8_t DS3231::_read_register(uint8_t reg) {
   _wire->write(reg);
   _wire->endTransmission(false);
 
-  uint8_t data;
+  uint8_t data{0};
   _wire->requestFrom(DS3231_ADDRESS, 1);
   while(_wire->available())
     data = _wire->read();
